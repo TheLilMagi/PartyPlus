@@ -1,13 +1,12 @@
-# PartyPlus Minimap Button Addon
+# PartyPlus: Easy Party Advertisements
 
 ## Overview
 
-The PartyPlus Minimap Button is a simple addon for TurtleWoW 1.12 that streamlines party and raid advertising. 
+The PartyPlus is a simple addon for TurtleWoW 1.12 that streamlines party and raid advertising. 
 
 Set the fields and click post to generate an advertisement to the specified channel and use the numeric controls to change the party members as you invite players to adjust the advertisement.
 
-The button can be clicked to toggle the PartyPlus frame, and you can also move the button by holding down the **Ctrl** key. You can also hide and show the minimap button using a slash command.
-
+The button can be clicked to toggle the PartyPlus frame, and you can also move the button by holding down the **Ctrl** key. 
 ## Features
 
 - **Role Counts** Specify the required count of each role.
@@ -42,7 +41,7 @@ The button can be clicked to toggle the PartyPlus frame, and you can also move t
    - Fill the fields for your required advertisement.
 
 3. **Set the chat channel**:
-- Fill the fields for your required advertisement.
+- Set the chat channel based on the available above
 
 4.  **Post**:
 - Click post to send the message.
