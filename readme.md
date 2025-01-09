@@ -41,7 +41,7 @@ The button can be clicked to toggle the PartyPlus frame, and you can also move t
    - Fill the fields for your required advertisement.
 
 3. **Set the chat channel**:
-- Fill the fields for your required advertisement.
+- Set the chat channel based on the available above
 
 4.  **Post**:
 - Click post to send the message.
