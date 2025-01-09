@@ -127,6 +127,23 @@ local function GetGroupSize()
     end
 end
 
+local function OnTabPressed_EditBox(editbox, nextEditBox)
+    editbox:SetScript("OnTabPressed", function()
+        if nextEditBox then
+            nextEditBox:SetFocus()
+        end
+    end)
+end
+
+OnTabPressed_EditBox(tankBox, healerBox)
+OnTabPressed_EditBox(healerBox, dpsBox)
+OnTabPressed_EditBox(dpsBox, requiredBox)
+OnTabPressed_EditBox(requiredBox, softReserveBox)
+OnTabPressed_EditBox(softReserveBox, hardReserverBox)
+OnTabPressed_EditBox(hardReserverBox, dungeonBox)
+OnTabPressed_EditBox(dungeonBox, channelBox)
+OnTabPressed_EditBox(channelBox, tankBox)
+
 local function PostToChat()
     local tanks = tankBox:GetNumber()
     local healers = healerBox:GetNumber()
