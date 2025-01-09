@@ -195,6 +195,8 @@ local function PostToChat()
             raid = "RAID",
             p = "PARTY",
             party = "PARTY",
+            w = "WHISPER",
+            whisper = "WHISPER",
             y = "YELL",
             yell = "YELL"
         }
