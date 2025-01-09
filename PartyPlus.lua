@@ -1,6 +1,6 @@
 local PartyPlus = CreateFrame("Frame", "PartyPlusFrame", UIParent)
 PartyPlus:SetWidth(260)
-PartyPlus:SetHeight(280)
+PartyPlus:SetHeight(350)
 PartyPlus:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
 PartyPlus:SetMovable(true)
 PartyPlus:EnableMouse(true)
@@ -78,25 +78,36 @@ local tankBox = CreateInputBox(PartyPlus, "Tanks:", 10, -35, "tankBox")
 local healerBox = CreateInputBox(PartyPlus, "Healers:", 10, -65, "healerBox")
 local dpsBox = CreateInputBox(PartyPlus, "DPS:", 10, -95, "dpsBox")
 local requiredBox = CreateInputBox(PartyPlus, "Required Party Size:", 10, -125, "requiredBox")
+local softReserveBox = CreateInputBox(PartyPlus, "Soft Reserve Count:", 10, -155, "softReserveBox")
+
+local hardReserveLabel = PartyPlus:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+hardReserveLabel:SetPoint("TOPLEFT", PartyPlus, "TOPLEFT", 10, -185)
+hardReserveLabel:SetText("Hard Reserves")
+
+local hardReserverBox = CreateFrame("EditBox", "hardReserveBox", PartyPlus, "InputBoxTemplate")
+hardReserverBox:SetWidth(232)
+hardReserverBox:SetHeight(20)
+hardReserverBox:SetPoint("TOPLEFT", PartyPlus, "TOPLEFT", 16, -200)
+hardReserverBox:SetAutoFocus(false)
 
 local dungeonLabel = PartyPlus:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-dungeonLabel:SetPoint("TOPLEFT", PartyPlus, "TOPLEFT", 10, -155)
+dungeonLabel:SetPoint("TOPLEFT", PartyPlus, "TOPLEFT", 10, -230)
 dungeonLabel:SetText("Dungeon Name")
 
 local dungeonBox = CreateFrame("EditBox", "dungeonBox", PartyPlus, "InputBoxTemplate")
 dungeonBox:SetWidth(232)
 dungeonBox:SetHeight(20)
-dungeonBox:SetPoint("TOPLEFT", PartyPlus, "TOPLEFT", 16, -170)
+dungeonBox:SetPoint("TOPLEFT", PartyPlus, "TOPLEFT", 16, -250)
 dungeonBox:SetAutoFocus(false)
 
 local channelLabel = PartyPlus:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-channelLabel:SetPoint("TOPLEFT", PartyPlus, "TOPLEFT", 10, -205)
+channelLabel:SetPoint("TOPLEFT", PartyPlus, "TOPLEFT", 10, -280)
 channelLabel:SetText("Chat channel")
 
 local channelBox = CreateFrame("EditBox", "channelBox", PartyPlus, "InputBoxTemplate")
 channelBox:SetWidth(232)
 channelBox:SetHeight(20)
-channelBox:SetPoint("TOPLEFT", PartyPlus, "TOPLEFT", 16, -220)
+channelBox:SetPoint("TOPLEFT", PartyPlus, "TOPLEFT", 16, -295)
 channelBox:SetAutoFocus(false)
 channelBox:SetText("say")
 
@@ -121,6 +132,8 @@ local function PostToChat()
     local healers = healerBox:GetNumber()
     local dps = dpsBox:GetNumber()
     local required = requiredBox:GetNumber()
+    local softReserves = softReserveBox:GetNumber()
+    local hardReserves = hardReserveBox:GetText()
     local dungeon = dungeonBox:GetText()
     local channel = channelBox:GetText()
 
@@ -157,6 +170,14 @@ local function PostToChat()
     table.insert(messageParts, string.format("%d/%d", partySize, required))
 
     local message = "LFM " .. table.concat(messageParts, ", ")
+
+    if hardReserves ~= "" then
+        message = message.." [HR: "..hardReserves.."] "
+    end
+
+    if softReserves > 0 then
+        message = message.." ("..softReserves.." SR > MS > OS) "
+    end
 
     local channelIndex = tonumber(channel)
 
@@ -215,3 +236,69 @@ PartyPlus:SetScript("OnMouseDown", ClearFocus)
 WorldFrame:SetScript("OnMouseDown", ClearFocus)
 
 PartyPlus:Hide()
+
+local PartyPlusMinimapButton = CreateFrame("Button", "PartyPlusMinimapButton", Minimap)
+PartyPlusMinimapButton:SetWidth(32)
+PartyPlusMinimapButton:SetHeight(32)
+PartyPlusMinimapButton:SetFrameStrata("MEDIUM")
+PartyPlusMinimapButton:SetPoint("TOPLEFT", Minimap, "TOPLEFT", 5, -5)
+
+local border = PartyPlusMinimapButton:CreateTexture(nil, "OVERLAY")
+border:SetTexture("Interface\\Minimap\\MiniMap-TrackingBorder")
+border:SetWidth(54)
+border:SetHeight(54)
+border:SetPoint("CENTER", PartyPlusMinimapButton, "CENTER", 11, -11)
+
+local icon = PartyPlusMinimapButton:CreateTexture(nil, "BACKGROUND")
+icon:SetTexture("Interface\\Icons\\INV_Misc_EngGizmos_01") 
+icon:SetWidth(20)
+icon:SetHeight(20)
+icon:SetPoint("CENTER", PartyPlusMinimapButton, "CENTER", 0, 0)
+
+PartyPlusMinimapButton:SetScript("OnEnter", function()
+    GameTooltip:SetOwner(PartyPlusMinimapButton, "ANCHOR_RIGHT")  
+    GameTooltip:SetText("Party Plus", 1, 1, 1)  
+    GameTooltip:AddLine("Click to open Party Plus", 0.8, 0.8, 0.8) 
+    GameTooltip:AddLine("Or use /pp or /partyplus.", 0.8, 0.8, 0.8)  
+    GameTooltip:AddLine("Ctrl + Left Click to reposition the minimap icon.", 0.8, 0.8, 0.8)  
+    GameTooltip:Show() 
+end)
+
+PartyPlusMinimapButton:SetScript("OnLeave", function()
+    GameTooltip:Hide()  
+end)
+
+-- Make it draggable (only while holding Ctrl)
+local isDragging = false
+
+PartyPlusMinimapButton:SetMovable(true)
+PartyPlusMinimapButton:EnableMouse(true)
+
+PartyPlusMinimapButton:RegisterForDrag("LeftButton")
+
+-- Drag start functionality: only works when holding Ctrl
+PartyPlusMinimapButton:SetScript("OnDragStart", function(self)
+    if IsControlKeyDown() then  
+        isDragging = true
+        PartyPlusMinimapButton:StartMoving()
+    end
+end)
+
+-- Drag stop functionality
+PartyPlusMinimapButton:SetScript("OnDragStop", function(self)
+    if isDragging then
+        PartyPlusMinimapButton:StopMovingOrSizing()
+        isDragging = false  
+    end
+end)
+
+-- Button click functionality
+PartyPlusMinimapButton:SetScript("OnClick", function()
+    if PartyPlus:IsShown() then
+        PartyPlus:Hide()
+    else
+        PartyPlus:Show()
+    end
+end)
+
+PartyPlusMinimapButton:Show()
