@@ -23,7 +23,7 @@ local closeButton = CreateFrame("Button", nil, PartyPlus, "UIPanelCloseButton")
 closeButton:SetPoint("TOPRIGHT", PartyPlus, "TOPRIGHT", -5, -5)
 closeButton:SetScript("OnClick", function() PartyPlus:Hide() end)
 
-local function CreateInputBox(parent, label, x, y, name)
+local function CreateInputBox(parent, label, x, y, name, defaultNumber)
     local frame = CreateFrame("Frame", nil, parent)
     frame:SetWidth(260)
     frame:SetHeight(20)
@@ -47,6 +47,7 @@ local function CreateInputBox(parent, label, x, y, name)
     editbox:SetNumber(0)
     editbox:SetBackdropColor(0, 0, 0, 0.8)
     editbox:SetBackdropBorderColor(0.5, 0.5, 0.5)
+    editbox:SetNumber(defaultNumber)
 
     local textColor = {1, 1, 1}
     editbox:SetTextColor(unpack(textColor))
@@ -74,11 +75,11 @@ local function CreateInputBox(parent, label, x, y, name)
     return editbox
 end
 
-local tankBox = CreateInputBox(PartyPlus, "Tanks:", 10, -35, "tankBox")
-local healerBox = CreateInputBox(PartyPlus, "Healers:", 10, -65, "healerBox")
-local dpsBox = CreateInputBox(PartyPlus, "DPS:", 10, -95, "dpsBox")
-local requiredBox = CreateInputBox(PartyPlus, "Required Party Size:", 10, -125, "requiredBox")
-local softReserveBox = CreateInputBox(PartyPlus, "Soft Reserve Count:", 10, -155, "softReserveBox")
+local tankBox = CreateInputBox(PartyPlus, "Tanks:", 10, -35, "tankBox", 1)
+local healerBox = CreateInputBox(PartyPlus, "Healers:", 10, -65, "healerBox", 1)
+local dpsBox = CreateInputBox(PartyPlus, "DPS:", 10, -95, "dpsBox", 3)
+local requiredBox = CreateInputBox(PartyPlus, "Required Party Size:", 10, -125, "requiredBox", 5)
+local softReserveBox = CreateInputBox(PartyPlus, "Soft Reserve Count:", 10, -155, "softReserveBox", 0)
 
 local hardReserveLabel = PartyPlus:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 hardReserveLabel:SetPoint("TOPLEFT", PartyPlus, "TOPLEFT", 10, -185)
@@ -92,7 +93,7 @@ hardReserverBox:SetAutoFocus(false)
 
 local dungeonLabel = PartyPlus:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 dungeonLabel:SetPoint("TOPLEFT", PartyPlus, "TOPLEFT", 10, -230)
-dungeonLabel:SetText("Dungeon Name")
+dungeonLabel:SetText("Content Name")
 
 local dungeonBox = CreateFrame("EditBox", "dungeonBox", PartyPlus, "InputBoxTemplate")
 dungeonBox:SetWidth(232)
@@ -102,14 +103,14 @@ dungeonBox:SetAutoFocus(false)
 
 local channelLabel = PartyPlus:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 channelLabel:SetPoint("TOPLEFT", PartyPlus, "TOPLEFT", 10, -280)
-channelLabel:SetText("Chat channel")
+channelLabel:SetText("Chat Channels (Space Seperated)")
 
 local channelBox = CreateFrame("EditBox", "channelBox", PartyPlus, "InputBoxTemplate")
 channelBox:SetWidth(232)
 channelBox:SetHeight(20)
 channelBox:SetPoint("TOPLEFT", PartyPlus, "TOPLEFT", 16, -295)
 channelBox:SetAutoFocus(false)
-channelBox:SetText("say")
+channelBox:SetText("yell 1")
 
 local postButton = CreateFrame("Button", nil, PartyPlus, "UIPanelButtonTemplate")
 postButton:SetWidth(100)
@@ -123,7 +124,7 @@ local function GetGroupSize()
     elseif GetNumPartyMembers() > 0 then
         return GetNumPartyMembers() + 1 
     else
-        return 0  
+        return 1
     end
 end
 
@@ -152,7 +153,7 @@ local function PostToChat()
     local softReserves = softReserveBox:GetNumber()
     local hardReserves = hardReserveBox:GetText()
     local dungeon = dungeonBox:GetText()
-    local channel = channelBox:GetText()
+    local channelInput = channelBox:GetText()
 
     if required == 0 or required == "" then
         print("Required Party Size is required!")
@@ -169,11 +170,13 @@ local function PostToChat()
     local messageParts = {}
 
     if tanks > 0 then
-        table.insert(messageParts, string.format("%d TANKS", tanks))
+        local tankText = (tanks == 1) and "TANK" or "TANKS"
+        table.insert(messageParts, string.format("%d %s", tanks, tankText))
     end
-
+    
     if healers > 0 then
-        table.insert(messageParts, string.format("%d HEALERS", healers))
+        local healerText = (healers == 1) and "HEALER" or "HEALERS"
+        table.insert(messageParts, string.format("%d %s", healers, healerText))
     end
 
     if dps > 0 then
@@ -196,43 +199,45 @@ local function PostToChat()
         message = message.." ("..softReserves.." SR > MS > OS) "
     end
 
-    local channelIndex = tonumber(channel)
+      local validChannels = {
+        s = "SAY",
+        say = "SAY",
+        g = "GUILD",
+        guild = "GUILD",
+        r = "RAID",
+        raid = "RAID",
+        p = "PARTY",
+        party = "PARTY",
+        w = "WHISPER",
+        whisper = "WHISPER",
+        y = "YELL",
+        yell = "YELL"
+    }
 
-    if channelIndex then
-        SendChatMessage(message, "CHANNEL", nil, channelIndex)
-    else
-        local channelLower = string.lower(channel)
+    local channels = {} 
 
-        local validChannels = {
-            s = "SAY",
-            say = "SAY",
-            g = "GUILD",
-            guild = "GUILD",
-            r = "RAID",
-            raid = "RAID",
-            p = "PARTY",
-            party = "PARTY",
-            w = "WHISPER",
-            whisper = "WHISPER",
-            y = "YELL",
-            yell = "YELL"
-        }
+    for channel in string.gmatch(channelInput, "[^ ]+") do
+        tinsert(channels, channel)
+    end
 
-        local channelType = validChannels[channelLower] or "SAY"
-
-        if not channelType then
-            print("You must enter a valid chat channel")
-            return
+    for _, channel in ipairs(channels) do
+        local num = tonumber(channel)  -- Check if it's a number (for numbered channels)
+        if num then
+            SendChatMessage(message, "CHANNEL", nil, num)
+        else
+            local channelType = validChannels[string.lower(channel)]
+            if channelType then
+                SendChatMessage(message, channelType)
+            else
+                print("Invalid channel: " .. channel)
+            end
         end
-
-        SendChatMessage(message, channelType)
     end
 end
 
 postButton:SetScript("OnClick", PostToChat)
 
 SLASH_PARTYPLUS1 = "/partyplus"
-SLASH_PARTYPLUS2 = "/pp"
 
 function SlashCmdList.PARTYPLUS(msg, editBox)
     if PartyPlus:IsShown() then
@@ -278,7 +283,7 @@ PartyPlusMinimapButton:SetScript("OnEnter", function()
     GameTooltip:SetOwner(PartyPlusMinimapButton, "ANCHOR_RIGHT")  
     GameTooltip:SetText("Party Plus", 1, 1, 1)  
     GameTooltip:AddLine("Click to open Party Plus", 0.8, 0.8, 0.8) 
-    GameTooltip:AddLine("Or use /pp or /partyplus.", 0.8, 0.8, 0.8)  
+    GameTooltip:AddLine("Or use /partyplus.", 0.8, 0.8, 0.8)  
     GameTooltip:AddLine("Ctrl + Left Click to reposition the minimap icon.", 0.8, 0.8, 0.8)  
     GameTooltip:Show() 
 end)
