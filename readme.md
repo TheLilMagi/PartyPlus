@@ -1,3 +1,7 @@
+Slightly modified the addon to allow an extra field box to add more information. This is good for saying Have Summon.
+Used spaces instead of commas. Removed some spaces for a shorter post.
+I suggest editing the file to adjust default values to the dungeon you run the most often, and to the channel number you use for world chat.
+
 # PartyPlus: Easy Party Advertisements
 
 ## Overview
