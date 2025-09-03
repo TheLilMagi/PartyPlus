@@ -110,7 +110,7 @@ channelBox:SetWidth(232)
 channelBox:SetHeight(20)
 channelBox:SetPoint("TOPLEFT", PartyPlus, "TOPLEFT", 16, -295)
 channelBox:SetAutoFocus(false)
-channelBox:SetText("Party")
+channelBox:SetText("5")
 
 local extraLabel = PartyPlus:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 extraLabel:SetPoint("TOPLEFT", PartyPlus, "TOPLEFT", 10, -325)
@@ -343,3 +343,4 @@ PartyPlusMinimapButton:SetScript("OnClick", function()
 end)
 
 PartyPlusMinimapButton:Show()
+
