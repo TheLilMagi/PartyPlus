@@ -1,6 +1,6 @@
 local PartyPlus = CreateFrame("Frame", "PartyPlusFrame", UIParent)
 PartyPlus:SetWidth(260)
-PartyPlus:SetHeight(350)
+PartyPlus:SetHeight(400)
 PartyPlus:SetPoint("CENTER", UIParent, "CENTER", 0, 0)
 PartyPlus:SetMovable(true)
 PartyPlus:EnableMouse(true)
@@ -75,11 +75,11 @@ local function CreateInputBox(parent, label, x, y, name, defaultNumber)
     return editbox
 end
 
-local tankBox = CreateInputBox(PartyPlus, "Tanks:", 10, -35, "tankBox", 1)
-local healerBox = CreateInputBox(PartyPlus, "Healers:", 10, -65, "healerBox", 1)
-local dpsBox = CreateInputBox(PartyPlus, "DPS:", 10, -95, "dpsBox", 3)
-local requiredBox = CreateInputBox(PartyPlus, "Required Party Size:", 10, -125, "requiredBox", 5)
-local softReserveBox = CreateInputBox(PartyPlus, "Soft Reserve Count:", 10, -155, "softReserveBox", 0)
+local tankBox = CreateInputBox(PartyPlus, "Tanks:", 10, -35, "tankBox", 2)
+local healerBox = CreateInputBox(PartyPlus, "Healers:", 10, -65, "healerBox", 2)
+local dpsBox = CreateInputBox(PartyPlus, "DPS:", 10, -95, "dpsBox", 6)
+local requiredBox = CreateInputBox(PartyPlus, "Required Party Size:", 10, -125, "requiredBox", 10)
+local softReserveBox = CreateInputBox(PartyPlus, "Soft Reserve Count:", 10, -155, "softReserveBox", 1)
 
 local hardReserveLabel = PartyPlus:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 hardReserveLabel:SetPoint("TOPLEFT", PartyPlus, "TOPLEFT", 10, -185)
@@ -93,7 +93,7 @@ hardReserverBox:SetAutoFocus(false)
 
 local dungeonLabel = PartyPlus:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 dungeonLabel:SetPoint("TOPLEFT", PartyPlus, "TOPLEFT", 10, -230)
-dungeonLabel:SetText("Content Name")
+dungeonLabel:SetText("Dungeon Name")
 
 local dungeonBox = CreateFrame("EditBox", "dungeonBox", PartyPlus, "InputBoxTemplate")
 dungeonBox:SetWidth(232)
@@ -110,7 +110,17 @@ channelBox:SetWidth(232)
 channelBox:SetHeight(20)
 channelBox:SetPoint("TOPLEFT", PartyPlus, "TOPLEFT", 16, -295)
 channelBox:SetAutoFocus(false)
-channelBox:SetText("yell 1")
+channelBox:SetText("Party")
+
+local extraLabel = PartyPlus:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+extraLabel:SetPoint("TOPLEFT", PartyPlus, "TOPLEFT", 10, -325)
+extraLabel:SetText("Extra Information")
+
+local extraBox = CreateFrame("EditBox", "extraBox", PartyPlus, "InputBoxTemplate")
+extraBox:SetWidth(232)
+extraBox:SetHeight(20)
+extraBox:SetPoint("TOPLEFT", PartyPlus, "TOPLEFT", 16, -340)
+extraBox:SetAutoFocus(false)
 
 local postButton = CreateFrame("Button", nil, PartyPlus, "UIPanelButtonTemplate")
 postButton:SetWidth(100)
@@ -143,7 +153,8 @@ OnTabPressed_EditBox(requiredBox, softReserveBox)
 OnTabPressed_EditBox(softReserveBox, hardReserverBox)
 OnTabPressed_EditBox(hardReserverBox, dungeonBox)
 OnTabPressed_EditBox(dungeonBox, channelBox)
-OnTabPressed_EditBox(channelBox, tankBox)
+OnTabPressed_EditBox(channelBox, extraBox)
+OnTabPressed_EditBox(extraBox, tankBox)
 
 local function PostToChat()
     local tanks = tankBox:GetNumber()
@@ -154,6 +165,7 @@ local function PostToChat()
     local hardReserves = hardReserveBox:GetText()
     local dungeon = dungeonBox:GetText()
     local channelInput = channelBox:GetText()
+	local extraInput = extraBox:GetText()
 
     if required == 0 or required == "" then
         print("Required Party Size is required!")
@@ -168,37 +180,41 @@ local function PostToChat()
     local partySize = GetGroupSize()
 
     local messageParts = {}
-
-    if tanks > 0 then
-        local tankText = (tanks == 1) and "TANK" or "TANKS"
-        table.insert(messageParts, string.format("%d %s", tanks, tankText))
-    end
-    
-    if healers > 0 then
-        local healerText = (healers == 1) and "HEALER" or "HEALERS"
-        table.insert(messageParts, string.format("%d %s", healers, healerText))
-    end
-
-    if dps > 0 then
-        table.insert(messageParts, string.format("%d DPS", dps))
-    end
-
+	
     if dungeon ~= "" then
         table.insert(messageParts, dungeon)
     end
 
-    table.insert(messageParts, string.format("%d/%d", partySize, required))
-
-    local message = "LFM " .. table.concat(messageParts, ", ")
-
-    if hardReserves ~= "" then
-        message = message.." [HR: "..hardReserves.."] "
+    if tanks > 0 then
+        local tankText = (tanks == 1) and "Tank" or "Tanks"
+        table.insert(messageParts, string.format("%d%s", tanks, tankText))
     end
+    
+    if healers > 0 then
+        local healerText = (healers == 1) and "Healer" or "Healers"
+        table.insert(messageParts, string.format("%d%s", healers, healerText))
+    end
+
+    if dps > 0 then
+        table.insert(messageParts, string.format("%dDPS", dps))
+    end
+
+    table.insert(messageParts, string.format("(%d/%d)", partySize, required))
+
+    local message = "LFM " .. table.concat(messageParts, " ")
 
     if softReserves > 0 then
-        message = message.." ("..softReserves.." SR > MS > OS) "
+        message = message.." "..softReserves.."SR>MS>OS "
     end
-
+	
+    if hardReserves ~= "" then
+        message = message.." ("..hardReserves.." HR) "
+    end	
+	
+    if extraInput ~= "" then
+		message = message.." "..extraInput.." "
+    end	
+	
       local validChannels = {
         s = "SAY",
         say = "SAY",
@@ -213,7 +229,7 @@ local function PostToChat()
         y = "YELL",
         yell = "YELL"
     }
-
+	
     local channels = {} 
 
     for channel in string.gmatch(channelInput, "[^ ]+") do
@@ -254,6 +270,7 @@ local function ClearFocus(self, button)
     requiredBox:ClearFocus()
     dungeonBox:ClearFocus()
     channelBox:ClearFocus()
+	extraBox:ClearFocus()
 end
 
 PartyPlus:SetScript("OnMouseDown", ClearFocus)
